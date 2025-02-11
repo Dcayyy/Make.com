@@ -1,20 +1,17 @@
-# Use the official Node.js 18 image from the Docker Hub as the base image
 FROM node:18
 
-# Set the working directory inside the container
-WORKDIR /app
+RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 
-# Copy package.json and package-lock.json to the working directory
+WORKDIR /home/node/app
+
 COPY package*.json ./
 
-# Install application dependencies
+USER node
+
 RUN npm install
 
-# Copy the rest of the application code to the working directory
-COPY . .
+COPY --chown=node:node . .
 
-# Expose the port the application will run on
-EXPOSE 3000
+EXPOSE 8080
 
-# Define the command to run the application
-CMD ["node", "src/index.js"]
+CMD [ "node", "app.js" ]
