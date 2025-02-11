@@ -49,6 +49,8 @@ function transformAirtableResponse(data) {
     };
 }
 
+module.exports = { transformAirtableResponse };
+
 
 const airtableResponse = {
     "airtableResponse": [
