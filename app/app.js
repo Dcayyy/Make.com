@@ -1,13 +1,13 @@
 // app.js
 const express = require('express');
-const { transformAirtableResponse } = require('./DynamicCarousel'); // Import the function
+const { transformAirtableResponse } = require('./Dynamic Carousel'); // Import your helper function
 
 const app = express();
 
 // Middleware to parse JSON bodies
 app.use(express.json());
 
-// Define the POST route that calls transformAirtableResponse with the request body
+// Define the dynamic carousel endpoint
 app.post('/dynamic-carousel', (req, res) => {
     try {
         // Expecting the request body to have an 'airtableResponse' field
@@ -20,10 +20,6 @@ app.post('/dynamic-carousel', (req, res) => {
     }
 });
 
-// Retrieve the port from environment variables or default to 3000
-const PORT = process.env.PORT || 3000;
+// You can add additional routes here if needed
 
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+module.exports = app;

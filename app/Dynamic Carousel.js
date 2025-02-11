@@ -1,4 +1,7 @@
+// DynamicCarousel.js
+
 function transformAirtableResponse(data) {
+    // Your logic to transform the airtable response into carousel data
     const cards = data.airtableResponse.map((product, index) => {
         const productLinkParts = product.productLink.split('/');
         const lastSegment = productLinkParts[productLinkParts.length - 1];
@@ -50,6 +53,7 @@ function transformAirtableResponse(data) {
 }
 
 module.exports = { transformAirtableResponse };
+
 
 
 const airtableResponse = {
