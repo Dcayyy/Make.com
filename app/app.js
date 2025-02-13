@@ -4,31 +4,54 @@ const vm = require('vm');
 const app = express();
 app.use(express.json());
 
-// Endpoint to execute arbitrary JS code
 app.post('/execute', (req, res) => {
-    // Expect the entire JS code to be passed in the "code" field of the JSON body
-    const { code } = req.body;
-    if (!code) {
-        return res.status(400).json({ error: 'Code is required' });
+    let { code, data } = req.body;
+
+    if (!code || !data) {
+        return res.status(400).json({ error: 'Both "code" and "data" fields are required.' });
+    }
+
+    // Unwrap the double-stringified code
+    try {
+        if (typeof code === 'string' && code.startsWith('"') && code.endsWith('"')) {
+            code = JSON.parse(code);
+        }
+    } catch (parseErr) {
+        console.error('Error parsing code:', parseErr);
+        return res.status(400).json({ error: 'Invalid code format' });
+    }
+
+    // Remove the invocation (e.g., transformAirtableResponse();) if present
+    code = code.replace(/transformAirtableResponse\(\s*\);?$/, '');
+
+    // Parse the data field (it is provided as a JSON string)
+    let parsedData;
+    try {
+        parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+    } catch (err) {
+        console.error('Error parsing data field:', err);
+        return res.status(400).json({ error: 'Invalid data format' });
     }
 
     try {
-        // Create a sandbox with no access to dangerous globals.
-        // You can optionally expose safe utilities if needed.
-        const sandbox = {};
+        // Create a sandbox and run the provided code to define the function
+        const sandbox = { result: null };
         vm.createContext(sandbox);
 
-        // Create the script instance with the provided code
         const script = new vm.Script(code);
+        script.runInContext(sandbox, { timeout: 1000 });
 
-        // Execute the code in the sandbox context.
-        // The result will be whatever the last evaluated expression returns.
-        const result = script.runInContext(sandbox, { timeout: 1000 });
+        // Check that the function is defined
+        if (typeof sandbox.transformAirtableResponse !== 'function') {
+            return res.status(400).json({ error: 'Provided code did not define transformAirtableResponse function.' });
+        }
 
-        res.json({ result });
-    } catch (error) {
-        console.error('Error executing code:', error);
-        res.status(500).json({ error: 'Error executing code', details: error.message });
+        // Call the function with the parsed data
+        sandbox.result = sandbox.transformAirtableResponse(parsedData);
+        res.json({ result: sandbox.result });
+    } catch (executionError) {
+        console.error('Error executing code:', executionError);
+        res.status(500).json({ error: 'Error executing code', details: executionError.message });
     }
 });
 
