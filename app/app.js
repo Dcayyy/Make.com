@@ -1,21 +1,37 @@
 const express = require('express');
-const { transformAirtableResponse } = require('./Dynamic Carousel');
+const vm = require('vm');
 
 const app = express();
-
-// Middleware to parse JSON bodies
 app.use(express.json());
 
-// Define the dynamic carousel endpoint
-app.post('/dynamic-carousel', (req, res) => {
+// Endpoint to execute arbitrary JS code
+app.post('/execute', (req, res) => {
+    // Expect the entire JS code to be passed in the "code" field of the JSON body
+    const { code } = req.body;
+    if (!code) {
+        return res.status(400).json({ error: 'Code is required' });
+    }
+
     try {
-        const inputData = req.body;
-        const transformedData = transformAirtableResponse(inputData);
-        res.json(transformedData);
+        // Create a sandbox with no access to dangerous globals.
+        // You can optionally expose safe utilities if needed.
+        const sandbox = {};
+        vm.createContext(sandbox);
+
+        // Create the script instance with the provided code
+        const script = new vm.Script(code);
+
+        // Execute the code in the sandbox context.
+        // The result will be whatever the last evaluated expression returns.
+        const result = script.runInContext(sandbox, { timeout: 1000 });
+
+        res.json({ result });
     } catch (error) {
-        console.error('Error transforming Airtable response:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error('Error executing code:', error);
+        res.status(500).json({ error: 'Error executing code', details: error.message });
     }
 });
 
-module.exports = app;
+app.listen(3000, () => {
+    console.log('Server running on port 3000');
+});
