@@ -1,6 +1,5 @@
 const dns = require('dns').promises;
 const { Resolver } = require('dns');
-const fetch = require('node-fetch');
 
 // Expanded patterns for Google MX detection
 const GOOGLE_MX_PATTERNS = [

@@ -2,8 +2,12 @@
   "name": "makedotcom",
   "version": "1.0.0",
   "author": "Zahari Mikov",
-  "main": "app.js",
+  "main": "app/server.js",
   "dependencies": {
     "express": "^4.21.2"
+  },
+  "scripts": {
+    "start": "node app/server.js",
+    "dev": "node app/server.js"
   }
 }
