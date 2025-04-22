@@ -1,0 +1,14 @@
+{
+  "name": "email-provider-detector",
+  "version": "1.0.0",
+  "description": "A service that detects email providers with DNS lookups",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.7"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  }
+} 
