@@ -1,13 +1,13 @@
 {
-  "name": "makedotcom",
+  "name": "make.com",
   "version": "1.0.0",
-  "author": "Zahari Mikov",
-  "main": "app/server.js",
-  "dependencies": {
-    "express": "^4.21.2"
-  },
+  "description": "Make.com API server",
+  "main": "app/app.js",
   "scripts": {
-    "start": "node app/server.js",
-    "dev": "node app/server.js"
+    "start": "node app/app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^2.7.0"
   }
 }

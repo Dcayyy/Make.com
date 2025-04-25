@@ -1,5 +1,7 @@
 const express = require('express');
 const { detectEmailProvider } = require('./emailProviderDetector');
+const vm = require('vm');
+const fetch = require('node-fetch');
 
 const app = express();
 app.use(express.json());
@@ -115,6 +117,57 @@ app.post('/dynamic-carousel', (req, res) => {
     }
 });
 
-app.listen(3000, () => {
-    console.log('Server running on port 3000');
+app.post('/execute-js', async (req, res) => {
+    const { code, data } = req.body;
+
+    if (!code) {
+        return res.status(400).json({ error: 'The "code" field is required in the request body.' });
+    }
+
+    try {
+        // Create a sandbox with the provided data and fetch
+        const sandbox = {
+            data: data || {},
+            fetch: fetch,
+            result: null
+        };
+
+        // Create a VM context
+        vm.createContext(sandbox);
+
+        // Wrap the code in an async function
+        const wrappedCode = `
+            (async () => {
+                ${code}
+            })();
+        `;
+
+        // Execute the code with a timeout of 5000ms (5 seconds)
+        const script = new vm.Script(wrappedCode);
+        await script.runInContext(sandbox, { timeout: 5000 });
+
+        // Return the result
+        res.json({ 
+            result: sandbox.result,
+            success: true
+        });
+    } catch (error) {
+        console.error('Error executing JavaScript code:', error);
+        res.status(500).json({ 
+            error: 'Error executing JavaScript code', 
+            details: error.message,
+            success: false
+        });
+    }
 });
+
+const startServer = async () => {
+    try {
+        await app.listen(3000);
+        console.log('Server running on port 3000');
+    } catch (error) {
+        console.error('Error starting server:', error);
+    }
+};
+
+startServer();
