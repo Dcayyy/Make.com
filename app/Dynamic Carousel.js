@@ -1,7 +1,6 @@
 // DynamicCarousel.js
 
 function transformAirtableResponse(data) {
-    // Your logic to transform the airtable response into carousel data
     const cards = data.airtableResponse.map((product, index) => {
         const productLinkParts = product.productLink.split('/');
         const lastSegment = productLinkParts[productLinkParts.length - 1];
@@ -68,7 +67,7 @@ transformAirtableResponse({
             "price": 25.49,
             "category": "Fat Burner",
             "createdTime": "2025-02-10T20:27:44.000Z",
-            "description": "We’ve created the perfect tablet for anyone with body composition goals or following a weight loss diet. ",
+            "description": "We've created the perfect tablet for anyone with body composition goals or following a weight loss diet. ",
             "productLink": "https://www.bodyandfit.com/en-gb/Products/Weight-Loss/Diet-Foods/Green-Coffee/Perfect-Burn/p/p_03840",
             "productName": "Perfect Burn",
             "discountedPrice": 21.67,
@@ -103,7 +102,7 @@ const airtableResponse = {
             "price": 25.49,
             "category": "Fat Burner",
             "createdTime": "2025-02-10T20:27:44.000Z",
-            "description": "We’ve created the perfect tablet for anyone with body composition goals or following a weight loss diet. ",
+            "description": "We've created the perfect tablet for anyone with body composition goals or following a weight loss diet. ",
             "productLink": "https://www.bodyandfit.com/en-gb/Products/Weight-Loss/Diet-Foods/Green-Coffee/Perfect-Burn/p/p_03840",
             "productName": "Perfect Burn",
             "discountedPrice": 21.67,

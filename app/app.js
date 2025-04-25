@@ -29,15 +29,10 @@ app.post('/dynamic-carousel', (req, res) => {
     const data = req.body;
     let airtableResponse;
 
-    // Handle different input formats - direct array or object with airtableResponse
     if (Array.isArray(data)) {
-        // Direct array input
         airtableResponse = data;
     } else if (data && data.airtableResponse) {
-        // Object with airtableResponse property
         airtableResponse = data.airtableResponse;
-        
-        // Check if airtableResponse is an object but not an array, and convert to array if needed
         if (typeof airtableResponse === 'object' && !Array.isArray(airtableResponse)) {
             airtableResponse = Object.values(airtableResponse);
         }
@@ -50,23 +45,19 @@ app.post('/dynamic-carousel', (req, res) => {
     }
 
     try {
-        // Transform the Airtable response into carousel format
         const cards = airtableResponse.map((product) => {
-            // Get description text and create a shortened version
             const description = product.Description || product.description || '';
-            let shortDescription = description.split('\n')[0] || ''; // Get first line
+            let shortDescription = description.split('\n')[0] || '';
             if (shortDescription.length > 50) {
                 shortDescription = shortDescription.substring(0, 50) + '...';
             }
             shortDescription += ' (Read More)';
             
-            // Create button type based on product link
             const productLink = product.productLink || '';
             const type = productLink.includes('variant=') ? 
                 'visit-the-product-fcilnbdd' : 
                 'visit-the-link-pdcjgcic';
             
-            // Create card with exact format shown in example
             return {
                 id: product.id || String(product.__IMTINDEX__ || ''),
                 title: `${(product.productName || '').toUpperCase()} | $${product.price}`,
@@ -125,28 +116,23 @@ app.post('/execute-js', async (req, res) => {
     }
 
     try {
-        // Create a sandbox with the provided data and fetch
         const sandbox = {
             data: data || {},
             fetch: fetch,
             result: null
         };
 
-        // Create a VM context
         vm.createContext(sandbox);
 
-        // Wrap the code in an async function
         const wrappedCode = `
             (async () => {
                 ${code}
             })();
         `;
 
-        // Execute the code with a timeout of 5000ms (5 seconds)
         const script = new vm.Script(wrappedCode);
         await script.runInContext(sandbox, { timeout: 5000 });
 
-        // Return the result
         res.json({ 
             result: sandbox.result,
             success: true

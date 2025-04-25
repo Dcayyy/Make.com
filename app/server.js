@@ -1,8 +1,3 @@
-/*
-    This is the starting point for the app.
- */
-
-// server.js
 const http = require('http');
 const app = require('./app');
 
