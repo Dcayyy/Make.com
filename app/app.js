@@ -25,22 +25,29 @@ app.post('/email-host-lookup', async (req, res) => {
 
 app.post('/dynamic-carousel', (req, res) => {
     const data = req.body;
+    let airtableResponse;
 
-    if (!data || !data.airtableResponse) {
-        return res.status(400).json({ error: 'The "airtableResponse" field is required in the request body.' });
-    }
-
-    try {
+    // Handle different input formats - direct array or object with airtableResponse
+    if (Array.isArray(data)) {
+        // Direct array input
+        airtableResponse = data;
+    } else if (data && data.airtableResponse) {
+        // Object with airtableResponse property
+        airtableResponse = data.airtableResponse;
+        
         // Check if airtableResponse is an object but not an array, and convert to array if needed
-        let airtableResponse = data.airtableResponse;
         if (typeof airtableResponse === 'object' && !Array.isArray(airtableResponse)) {
             airtableResponse = Object.values(airtableResponse);
         }
+    } else {
+        return res.status(400).json({ error: 'Request body must be an array or contain an "airtableResponse" field.' });
+    }
 
-        if (!Array.isArray(airtableResponse)) {
-            return res.status(400).json({ error: 'airtableResponse must be an array or an object convertible to an array.' });
-        }
+    if (!Array.isArray(airtableResponse)) {
+        return res.status(400).json({ error: 'Input must be an array or convertible to an array.' });
+    }
 
+    try {
         // Transform the Airtable response into carousel format
         const cards = airtableResponse.map((product) => {
             // Get description text and create a shortened version
