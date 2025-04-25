@@ -1,5 +1,4 @@
 const express = require('express');
-const vm = require('vm');
 const { detectEmailProvider } = require('./emailProviderDetector');
 
 const app = express();
@@ -24,57 +23,88 @@ app.post('/email-host-lookup', async (req, res) => {
     }
 });
 
-app.post('/execute', (req, res) => {
-    let { code, data } = req.body;
+app.post('/dynamic-carousel', (req, res) => {
+    const data = req.body;
 
-    if (!code || !data) {
-        return res.status(400).json({ error: 'Both "code" and "data" fields are required.' });
+    if (!data || !data.airtableResponse) {
+        return res.status(400).json({ error: 'The "airtableResponse" field is required in the request body.' });
     }
 
     try {
-        if (typeof code === 'string' && code.startsWith('"') && code.endsWith('"')) {
-            code = JSON.parse(code);
-        }
-    } catch (parseErr) {
-        console.error('Error parsing code:', parseErr);
-        return res.status(400).json({ error: 'Invalid code format' });
-    }
-
-    code = code.replace(/transformAirtableResponse\(\s*\);?$/, '');
-
-    let parsedData;
-    try {
-        parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-    } catch (err) {
-        console.error('Error parsing data field:', err);
-        return res.status(400).json({ error: 'Invalid data format' });
-    }
-
-    try {
-        const sandbox = { result: null };
-        vm.createContext(sandbox);
-
-        const script = new vm.Script(code);
-        script.runInContext(sandbox, { timeout: 1000 });
-
-        if (typeof sandbox.transformAirtableResponse !== 'function') {
-            return res.status(400).json({ error: 'Provided code did not define transformAirtableResponse function.' });
-        }
-
         // Check if airtableResponse is an object but not an array, and convert to array if needed
-        if (parsedData.airtableResponse && typeof parsedData.airtableResponse === 'object' && !Array.isArray(parsedData.airtableResponse)) {
-            parsedData.airtableResponse = Object.values(parsedData.airtableResponse);
+        let airtableResponse = data.airtableResponse;
+        if (typeof airtableResponse === 'object' && !Array.isArray(airtableResponse)) {
+            airtableResponse = Object.values(airtableResponse);
         }
 
-        if (!parsedData.airtableResponse || !Array.isArray(parsedData.airtableResponse)) {
-            return res.status(400).json({ error: 'airtableResponse must be an array or an object with numeric keys convertible to an array.' });
+        if (!Array.isArray(airtableResponse)) {
+            return res.status(400).json({ error: 'airtableResponse must be an array or an object convertible to an array.' });
         }
 
-        sandbox.result = sandbox.transformAirtableResponse(parsedData);
-        res.json({ result: sandbox.result });
-    } catch (executionError) {
-        console.error('Error executing code:', executionError);
-        res.status(500).json({ error: 'Error executing code', details: executionError.message });
+        // Transform the Airtable response into carousel format
+        const cards = airtableResponse.map((product) => {
+            // Get description text and create a shortened version
+            const description = product.Description || product.description || '';
+            let shortDescription = description.split('\n')[0] || ''; // Get first line
+            if (shortDescription.length > 50) {
+                shortDescription = shortDescription.substring(0, 50) + '...';
+            }
+            shortDescription += ' (Read More)';
+            
+            // Create button type based on product link
+            const productLink = product.productLink || '';
+            const type = productLink.includes('variant=') ? 
+                'visit-the-product-fcilnbdd' : 
+                'visit-the-link-pdcjgcic';
+            
+            // Create card with exact format shown in example
+            return {
+                id: product.id || String(product.__IMTINDEX__ || ''),
+                title: `${(product.productName || '').toUpperCase()} | $${product.price}`,
+                description: {
+                    slate: [
+                        {
+                            children: [
+                                {
+                                    text: description
+                                }
+                            ]
+                        }
+                    ],
+                    text: shortDescription
+                },
+                imageUrl: product.productImageUrl || '',
+                buttons: [
+                    {
+                        name: type.includes('product') ? "Visit the product" : "Visit the link",
+                        request: {
+                            type: type,
+                            payload: {
+                                label: type.includes('product') ? "Visit the product" : "Visit the link",
+                                actions: [
+                                    {
+                                        type: "open_url",
+                                        payload: {
+                                            url: productLink
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            };
+        });
+
+        const result = {
+            layout: "Carousel",
+            cards: cards
+        };
+
+        res.json(result);
+    } catch (error) {
+        console.error('Error transforming airtable response:', error);
+        res.status(500).json({ error: 'Error transforming airtable response', details: error.message });
     }
 });
 
