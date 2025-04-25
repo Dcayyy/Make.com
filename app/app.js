@@ -61,6 +61,15 @@ app.post('/execute', (req, res) => {
             return res.status(400).json({ error: 'Provided code did not define transformAirtableResponse function.' });
         }
 
+        // Check if airtableResponse is an object but not an array, and convert to array if needed
+        if (parsedData.airtableResponse && typeof parsedData.airtableResponse === 'object' && !Array.isArray(parsedData.airtableResponse)) {
+            parsedData.airtableResponse = Object.values(parsedData.airtableResponse);
+        }
+
+        if (!parsedData.airtableResponse || !Array.isArray(parsedData.airtableResponse)) {
+            return res.status(400).json({ error: 'airtableResponse must be an array or an object with numeric keys convertible to an array.' });
+        }
+
         sandbox.result = sandbox.transformAirtableResponse(parsedData);
         res.json({ result: sandbox.result });
     } catch (executionError) {
